@@ -14,6 +14,10 @@ dependencies = [
     "pydantic>=2.0",
     "numpy>=1.24",
     "pyyaml>=6.0",
+    # Approved 2026-09-15 for robot.get_camera_image's JPEG thumbnail re-encoding
+    # (docs/09-perception-architecture.md Binary Data Policy, ADR-009) — no combination
+    # of the other approved dependencies can encode/resize an image.
+    "Pillow>=9.0",
 ]
 
 [project.optional-dependencies]
