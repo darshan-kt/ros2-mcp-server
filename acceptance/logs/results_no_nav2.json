@@ -1,0 +1,191 @@
+[
+  {
+    "criterion": "1. get_state pose",
+    "measured": {
+      "pose": {
+        "x": -0.06899241463872934,
+        "y": -0.5000103268507883,
+        "yaw": -1.3422718560433001e-06,
+        "frame": "odom",
+        "stamp": "1970-01-01T00:02:37.359000+00:00"
+      },
+      "age_s": -0.0589999999999975
+    },
+    "verdict": "PASS",
+    "evidence": {},
+    "ts": "2026-09-15T19:04:10.109923+00:00"
+  },
+  {
+    "criterion": "2a. get_capabilities (no Nav2): navigation absent",
+    "measured": {
+      "capability_ids": [
+        "differential_drive_motion",
+        "range_sensing"
+      ],
+      "tools": [
+        "robot.get_capabilities",
+        "robot.get_laser_scan",
+        "robot.get_state",
+        "robot.move",
+        "robot.stop"
+      ]
+    },
+    "verdict": "PASS",
+    "evidence": {},
+    "ts": "2026-09-15T19:04:10.114575+00:00"
+  },
+  {
+    "criterion": "3. get_laser_scan",
+    "measured": {
+      "nearest": {
+        "range_m": 0.3399930000305176,
+        "angle_rad": 1.3819498158991337,
+        "sector": "left"
+      },
+      "farthest": {
+        "range_m": 3.1918282508850098,
+        "angle_rad": 1.871754813939333,
+        "sector": "left"
+      },
+      "sectors": {
+        "front": {
+          "range_m": 1.1354564428329468,
+          "angle_rad": 0.34986071288585663,
+          "sector": "front"
+        },
+        "left": {
+          "range_m": 0.3399930000305176,
+          "angle_rad": 1.3819498158991337,
+          "sector": "left"
+        },
+        "right": {
+          "range_m": 0.440390408039093,
+          "angle_rad": 4.793091766536236,
+          "sector": "right"
+        },
+        "rear": {
+          "range_m": 0.9551584720611572,
+          "angle_rad": 2.676434453576803,
+          "sector": "rear"
+        }
+      },
+      "stale": false
+    },
+    "verdict": "PASS",
+    "evidence": {},
+    "ts": "2026-09-15T19:04:10.118150+00:00"
+  },
+  {
+    "criterion": "4. move(forward, 1.0) accuracy",
+    "measured": {
+      "error_cm": 3.88,
+      "displacement_m": 0.9612,
+      "tool_result": {
+        "status": "succeeded",
+        "command_id": "01M2K79247BP3SZE5TW9RP44J8",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 3.816167598999982,
+        "error": null,
+        "distance_traveled_m": 0.9513685913039517,
+        "final_pose": {
+          "x": 0.8823761253437362,
+          "y": -0.5000188882526145,
+          "yaw": -4.100335744770286e-06,
+          "frame": "odom",
+          "stamp": "1970-01-01T00:02:41.167000+00:00"
+        },
+        "stop_reason": "target_reached"
+      }
+    },
+    "verdict": "PASS",
+    "evidence": {},
+    "ts": "2026-09-15T19:04:14.437478+00:00"
+  },
+  {
+    "criterion": "5. stop latency",
+    "measured": {
+      "latency_ms": 11.4,
+      "call_round_trip_ms": 13.7
+    },
+    "verdict": "PASS",
+    "evidence": {
+      "stop_result": {
+        "status": "succeeded",
+        "command_id": "01M2K796EB4250J8HC8STA8MJG",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 0.010350621999805298,
+        "error": null,
+        "cancelled_command_id": "01M2K796B6WEF2EZEEMM412E8M",
+        "final_pose": {
+          "x": 0.8939122877839929,
+          "y": -0.5000189924004812,
+          "yaw": -5.068217816615574e-06,
+          "frame": "odom",
+          "stamp": "1970-01-01T00:02:41.813000+00:00"
+        }
+      }
+    },
+    "ts": "2026-09-15T19:04:14.596021+00:00"
+  },
+  {
+    "criterion": "8. move exceeding limit -> SAFETY_REJECTED + silent /cmd_vel",
+    "measured": {
+      "error_code": "SAFETY_REJECTED",
+      "cmd_vel_messages_published": 0
+    },
+    "verdict": "PASS",
+    "evidence": {
+      "tool_result": {
+        "status": "failed",
+        "command_id": "01M2K796G7XPZGXM3ND2QH9B0K",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 0.00020164299985481193,
+        "error": {
+          "code": "SAFETY_REJECTED",
+          "message": "requested move distance 6.0m exceeds the configured limit of 5.0m",
+          "details": {
+            "requested_distance_m": 6.0,
+            "max_move_distance_m": 5.0
+          }
+        },
+        "distance_traveled_m": 0.0,
+        "final_pose": null,
+        "stop_reason": null
+      }
+    },
+    "ts": "2026-09-15T19:04:14.602553+00:00"
+  },
+  {
+    "criterion": "9. get_camera_image",
+    "measured": {
+      "width_px": 0,
+      "height_px": 0,
+      "frame": null,
+      "jpeg_bytes": null,
+      "data_age_s": null
+    },
+    "verdict": "BLOCKED",
+    "evidence": {
+      "tool_result": {
+        "status": "failed",
+        "command_id": "01M2K796GCDQBDZ0E4X5Y2BTFE",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 6.679100033579743e-05,
+        "error": {
+          "code": "CAPABILITY_UNAVAILABLE",
+          "message": "no camera available",
+          "details": {}
+        },
+        "stamp": null,
+        "frame": null,
+        "data_age_s": null,
+        "image_jpeg_bytes": "",
+        "width_px": 0,
+        "height_px": 0,
+        "original_width_px": 0,
+        "original_height_px": 0
+      }
+    },
+    "ts": "2026-09-15T19:04:14.607006+00:00"
+  }
+]

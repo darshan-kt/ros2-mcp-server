@@ -1,0 +1,116 @@
+[
+  {
+    "criterion": "2b. get_capabilities (with Nav2): navigation present",
+    "measured": {
+      "capability_ids": [
+        "autonomous_navigation",
+        "differential_drive_motion",
+        "localization",
+        "range_sensing"
+      ],
+      "tools": [
+        "robot.get_capabilities",
+        "robot.get_laser_scan",
+        "robot.get_state",
+        "robot.move",
+        "robot.navigate",
+        "robot.stop"
+      ]
+    },
+    "verdict": "PASS",
+    "evidence": {},
+    "ts": "2026-09-15T19:09:06.437972+00:00"
+  },
+  {
+    "criterion": "6. navigate to goal",
+    "measured": {
+      "goal": [
+        1.5,
+        -0.5
+      ],
+      "final_pose": {
+        "x": 1.2706131996176127,
+        "y": -0.5231473026927198,
+        "yaw": -0.06670386833032728,
+        "frame": "map",
+        "stamp": "2026-09-15T19:09:16.770492+00:00"
+      },
+      "error_m": 0.231
+    },
+    "verdict": "PASS",
+    "evidence": {
+      "first_attempt": {
+        "status": "failed",
+        "command_id": "01M2K7J3G6HS4J3H379RCGVARD",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 1.347599982182146e-05,
+        "error": {
+          "code": "INVALID_FRAME",
+          "message": "unknown frame 'map'",
+          "details": {
+            "known_frames": [
+              "base_footprint",
+              "base_link",
+              "base_scan",
+              "caster_back_link",
+              "imu_link",
+              "wheel_left_link",
+              "wheel_right_link"
+            ]
+          }
+        },
+        "final_pose": null,
+        "distance_remaining_m": null,
+        "fail_reason": null
+      },
+      "retried_after_s": 8.0
+    },
+    "ts": "2026-09-15T19:09:16.771925+00:00"
+  },
+  {
+    "criterion": "7. cancelled navigate leaves robot stationary",
+    "measured": {
+      "navigate_error_code": "CANCELLED",
+      "non_zero_cmd_vel_in_3s_after_cancel": 0
+    },
+    "verdict": "PASS",
+    "evidence": {
+      "stop_result": {
+        "status": "succeeded",
+        "command_id": "01M2K7JDSFWZZYCC1GY0DRK9DE",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 0.02468148099978862,
+        "error": null,
+        "cancelled_command_id": "01M2K7JDK5WG5E2H2QZ0CHV36E",
+        "final_pose": {
+          "x": 1.3007287172434459,
+          "y": -0.5310905499800318,
+          "yaw": -0.0702154049377613,
+          "frame": "odom",
+          "stamp": "1970-01-01T00:07:42.815000+00:00"
+        }
+      },
+      "navigate_result": {
+        "status": "failed",
+        "command_id": "01M2K7JDK5WG5E2H2QZ0CHV36E",
+        "robot_id": "turtlebot3_waffle",
+        "duration_sec": 0.2685303970001769,
+        "error": {
+          "code": "CANCELLED",
+          "message": "navigation was canceled",
+          "details": {}
+        },
+        "final_pose": {
+          "x": 1.2508247549506912,
+          "y": -0.5021445611691088,
+          "yaw": -0.07525458744120365,
+          "frame": "map",
+          "stamp": "2026-09-15T19:09:17.041736+00:00"
+        },
+        "distance_remaining_m": 1.2856906652450562,
+        "fail_reason": "cancelled"
+      }
+    },
+    "ts": "2026-09-15T19:09:20.046542+00:00"
+  }
+]
