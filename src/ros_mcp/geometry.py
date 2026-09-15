@@ -42,3 +42,28 @@ def angular_difference(target_rad: float, current_rad: float) -> float:
 
 def euclidean_distance(x1: float, y1: float, x2: float, y2: float) -> float:
     return math.hypot(x2 - x1, y2 - y1)
+
+
+_TRANSLATION_LOCAL_DELTA: dict[str, tuple[float, float]] = {
+    # (forward, lateral) unit displacement in the robot's own frame.
+    "forward": (1.0, 0.0),
+    "backward": (-1.0, 0.0),
+    "left": (0.0, 1.0),
+    "right": (0.0, -1.0),
+}
+
+
+def project_translation(
+    direction: str, distance_m: float, x: float, y: float, yaw: float
+) -> tuple[float, float]:
+    """World-frame (x, y) after moving `distance_m` in `direction` (forward/backward/
+    left/right, robot-local) from (x, y, yaw). Shared by the safety geofence prediction
+    (ros_mcp.safety.policy_engine) and the real closed-loop motion controller
+    (ros_mcp.adapters.motion.cmd_vel_plugin) so there is exactly one implementation of
+    this projection."""
+    forward, lateral = _TRANSLATION_LOCAL_DELTA[direction]
+    dx_local = forward * distance_m
+    dy_local = lateral * distance_m
+    dx_world = dx_local * math.cos(yaw) - dy_local * math.sin(yaw)
+    dy_world = dx_local * math.sin(yaw) + dy_local * math.cos(yaw)
+    return x + dx_world, y + dy_world

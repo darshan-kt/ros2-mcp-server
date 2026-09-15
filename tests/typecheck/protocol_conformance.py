@@ -19,9 +19,15 @@ from ros_mcp.contracts.capabilities import CapabilityInferenceEngine, Capability
 from ros_mcp.contracts.codec import MessageCodec
 from ros_mcp.contracts.config import ConfigProvider, SafetyConfig
 from ros_mcp.contracts.discovery import DiscoveryEngine
+from ros_mcp.contracts.adapters import CancellationToken, MotionBackend
+from ros_mcp.contracts.execution import CommandPlanner, ExecutionManager
 from ros_mcp.contracts.safety import SafetyPolicyEngine, ValidationEngine
 from ros_mcp.contracts.subscriptions import SubscriptionManager
 from ros_mcp.discovery.engine import RclpyDiscoveryEngine
+from ros_mcp.adapters.motion.cmd_vel_plugin import CmdVelMotionPlugin
+from ros_mcp.execution.cancellation import SimpleCancellationToken
+from ros_mcp.execution.manager import DefaultExecutionManager
+from ros_mcp.execution.planner import DefaultCommandPlanner
 from ros_mcp.safety.policy_engine import DefaultSafetyPolicyEngine
 from ros_mcp.subscriptions.manager import PooledSubscriptionManager
 from ros_mcp.validation.engine import DefaultValidationEngine
@@ -34,3 +40,28 @@ _subscription_manager: SubscriptionManager = PooledSubscriptionManager(ros_bridg
 _config_provider: ConfigProvider = YamlConfigProvider("config/robot.yaml")
 _validation_engine: ValidationEngine = DefaultValidationEngine()
 _safety_policy_engine: SafetyPolicyEngine = DefaultSafetyPolicyEngine(lambda: SafetyConfig())
+_cancellation_token: CancellationToken = SimpleCancellationToken(deadline_monotonic=0.0)
+_motion_backend: MotionBackend = CmdVelMotionPlugin(
+    ros_bridge=None,
+    node=None,
+    subscriptions=PooledSubscriptionManager(ros_bridge=None, node=None),
+    robot_id="r1",
+    cmd_vel_topic="/cmd_vel",
+    odom_topic="/odom",
+    laser_scan_topic=None,
+    safety_config_provider=lambda: SafetyConfig(),
+)
+_command_planner: CommandPlanner = DefaultCommandPlanner(motion_backend=None, navigation_backend=None)
+
+
+async def _current_pose_provider():
+    return None
+
+
+_execution_manager: ExecutionManager = DefaultExecutionManager(
+    registry=_capability_registry,
+    command_planner=_command_planner,
+    safety_policy_engine=_safety_policy_engine,
+    current_pose_provider=_current_pose_provider,
+    read_handlers={},
+)

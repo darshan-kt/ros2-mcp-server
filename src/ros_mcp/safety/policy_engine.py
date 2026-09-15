@@ -16,17 +16,9 @@ from ros_mcp.contracts.config import SafetyConfig
 from ros_mcp.contracts.core import MoveTarget, NavigateTarget, Operation, Pose2D, SemanticCommand
 from ros_mcp.contracts.errors import ErrorCode, ToolError
 from ros_mcp.contracts.safety import SafetyDecision, SafetyOutcome
-from ros_mcp.geometry import euclidean_distance
+from ros_mcp.geometry import euclidean_distance, project_translation
 
 _ROTATION_DIRECTIONS = frozenset({"rotate_left", "rotate_right"})
-_TRANSLATION_DELTA_XY: dict[str, tuple[float, float]] = {
-    # (forward, lateral) displacement in the robot's own frame, rotated by current yaw
-    # before being added to the current pose.
-    "forward": (1.0, 0.0),
-    "backward": (-1.0, 0.0),
-    "left": (0.0, 1.0),
-    "right": (0.0, -1.0),
-}
 
 
 def _resolve_constraints(safety: SafetyConfig) -> Any:
@@ -46,15 +38,9 @@ def _resolve_constraints(safety: SafetyConfig) -> Any:
 def _predicted_move_endpoint(target: MoveTarget, current_pose: Pose2D) -> tuple[float, float]:
     if target.direction in _ROTATION_DIRECTIONS or target.distance_m is None:
         return current_pose.x, current_pose.y
-    import math
-
-    forward, lateral = _TRANSLATION_DELTA_XY[target.direction]
-    dx_local = forward * target.distance_m
-    dy_local = lateral * target.distance_m
-    yaw = current_pose.yaw
-    dx_world = dx_local * math.cos(yaw) - dy_local * math.sin(yaw)
-    dy_world = dx_local * math.sin(yaw) + dy_local * math.cos(yaw)
-    return current_pose.x + dx_world, current_pose.y + dy_world
+    return project_translation(
+        target.direction, target.distance_m, current_pose.x, current_pose.y, current_pose.yaw
+    )
 
 
 def _within_geofence(x: float, y: float, safety: SafetyConfig) -> bool:
