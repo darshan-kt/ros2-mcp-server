@@ -9,12 +9,24 @@ failure mode becomes a `TransformResult.error` value.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable
 
 from ros_mcp.contracts.discovery import GraphSnapshot
 from ros_mcp.contracts.tf import TransformResult
 from ros_mcp.geometry import Quaternion, quaternion_to_yaw
+
+# Sentinel `stamp` value meaning "the latest available transform" rather than a specific
+# instant — the epoch-zero `datetime` maps to rclpy's zero `Time()`, which tf2 already
+# treats as "give me the most recent transform you have" (its own conventional
+# shorthand for "now"). Callers that want "now" MUST use this, not
+# `datetime.now(timezone.utc)`: with `use_sim_time` (true for the MVP reference sim),
+# TF data is stamped in simulation time, which can be far from wall-clock "now" — a
+# wall-clock stamp reliably produces `ExtrapolationException` ("extrapolation") against
+# a sim-time-stamped buffer. Only pass an actual non-sentinel `stamp` when you have one
+# genuinely drawn from the same (sim or wall) clock the TF data itself uses — e.g. a
+# cached sensor message's own `header.stamp` (ros_mcp.adapters.perception.perception_adapter).
+LATEST_TRANSFORM_STAMP = datetime.fromtimestamp(0, tz=timezone.utc)
 
 
 class RclpyTFAdapter:
@@ -40,7 +52,7 @@ class RclpyTFAdapter:
             from rclpy.time import Time
 
             try:
-                ros_time = Time(seconds=stamp.timestamp())
+                ros_time = Time() if stamp == LATEST_TRANSFORM_STAMP else Time(seconds=stamp.timestamp())
                 transform = self._tf_buffer.lookup_transform(
                     target_frame, source_frame, ros_time, timeout=Duration(seconds=timeout_s)
                 )

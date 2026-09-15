@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 from ros_mcp.contracts.config import (
     CapabilityConfig,
+    DiscoveryConfig,
     LoggingConfig,
     PerceptionConfig,
     RawRosAccessConfig,
@@ -106,6 +107,10 @@ class YamlConfigProvider:
     def logging_config(self) -> LoggingConfig:
         with self._lock:
             return self._root.logging
+
+    def discovery(self) -> DiscoveryConfig:
+        with self._lock:
+            return self._root.discovery
 
     def reload(self) -> None:
         new_root = self._load()

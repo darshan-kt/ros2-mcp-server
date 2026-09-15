@@ -36,7 +36,7 @@ from ros_mcp.contracts.results import (
 
 _READ_DEFAULT_TIMEOUT_S = 5.0
 
-_RESULT_TYPE_BY_OPERATION: dict[Operation, type[ToolResult]] = {
+RESULT_TYPE_BY_OPERATION: dict[Operation, type[ToolResult]] = {
     Operation.GET_STATE: RobotStateResult,
     Operation.GET_CAPABILITIES: CapabilitiesResult,
     Operation.MOVE: MotionResult,
@@ -135,5 +135,5 @@ class SemanticCommandFactory:
             confidence=confidence,
             execution_state=ExecutionState.RECEIVED,
             created_at=datetime.now(timezone.utc),
-            expected_result_type=_RESULT_TYPE_BY_OPERATION[operation],
+            expected_result_type=RESULT_TYPE_BY_OPERATION[operation],
         )

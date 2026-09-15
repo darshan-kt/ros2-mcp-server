@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "ros-mcp-server": {
+      "command": "/home/darshan/ros2-mcp-server/examples/run_server.sh"
+    }
+  }
+}

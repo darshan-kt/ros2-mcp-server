@@ -70,6 +70,12 @@ class RclpyDiscoveryEngine:
     async def get_current_snapshot(self) -> GraphSnapshot:
         return self._latest
 
+    def latest_snapshot_sync(self) -> GraphSnapshot:
+        """Not part of the frozen DiscoveryEngine Protocol (which only offers the async
+        accessor) — a synchronous read of the same cached snapshot, for callers that
+        are themselves synchronous (e.g. RclpyTFAdapter.known_frames())."""
+        return self._latest
+
     def on_snapshot_changed(self, callback: Callable[[GraphSnapshot], None]) -> None:
         self._callbacks.append(callback)
 

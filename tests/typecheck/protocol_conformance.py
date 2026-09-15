@@ -17,18 +17,25 @@ from ros_mcp.codec.message_codec import RosidlMessageCodec
 from ros_mcp.config.provider import YamlConfigProvider
 from ros_mcp.contracts.capabilities import CapabilityInferenceEngine, CapabilityRegistry
 from ros_mcp.contracts.codec import MessageCodec
-from ros_mcp.contracts.config import ConfigProvider, SafetyConfig
+from ros_mcp.contracts.config import ConfigProvider, PerceptionConfig, SafetyConfig
 from ros_mcp.contracts.discovery import DiscoveryEngine
 from ros_mcp.contracts.adapters import CancellationToken, MotionBackend, NavigationBackend
 from ros_mcp.contracts.execution import CommandPlanner, ExecutionManager
 from ros_mcp.contracts.tf import TFAdapter
 from ros_mcp.contracts.safety import SafetyPolicyEngine, ValidationEngine
 from ros_mcp.contracts.subscriptions import SubscriptionManager
+from ros_mcp.commands.factory import SemanticCommandFactory
 from ros_mcp.discovery.engine import RclpyDiscoveryEngine
 from ros_mcp.adapters.motion.cmd_vel_plugin import CmdVelMotionPlugin
 from ros_mcp.adapters.navigation.nav2_plugin import Nav2NavigationPlugin
+from ros_mcp.adapters.perception.perception_adapter import DefaultPerceptionAdapter
+from ros_mcp.adapters.perception.stub_detector import StubDetectorPlugin
 from ros_mcp.adapters.perception.tf_adapter import RclpyTFAdapter
+from ros_mcp.contracts.adapters import ObjectDetectorPlugin, PerceptionAdapter
+from ros_mcp.contracts.mcp_surface import ResourceProvider, ToolProvider
 from ros_mcp.execution.cancellation import SimpleCancellationToken
+from ros_mcp.mcp.resource_provider import DefaultResourceProvider
+from ros_mcp.mcp.tool_provider import DefaultToolProvider
 from ros_mcp.execution.manager import DefaultExecutionManager
 from ros_mcp.execution.planner import DefaultCommandPlanner
 from ros_mcp.safety.policy_engine import DefaultSafetyPolicyEngine
@@ -75,4 +82,28 @@ _execution_manager: ExecutionManager = DefaultExecutionManager(
     safety_policy_engine=_safety_policy_engine,
     current_pose_provider=_current_pose_provider,
     read_handlers={},
+)
+_detector_plugin: ObjectDetectorPlugin = StubDetectorPlugin()
+_perception_adapter: PerceptionAdapter = DefaultPerceptionAdapter(
+    robot_id="r1",
+    registry=_capability_registry,
+    subscriptions=_subscription_manager,
+    tf_adapter=_tf_adapter,
+    detector_plugin=_detector_plugin,
+    safety_config_provider=lambda: SafetyConfig(),
+    perception_config_provider=lambda: PerceptionConfig(),
+)
+_tool_provider: ToolProvider = DefaultToolProvider(
+    registry=_capability_registry,
+    validation_engine=_validation_engine,
+    execution_manager=_execution_manager,
+    command_factory=SemanticCommandFactory(robot_id="r1"),
+    config_provider=_config_provider,
+)
+_resource_provider: ResourceProvider = DefaultResourceProvider(
+    registry=_capability_registry,
+    subscriptions=_subscription_manager,
+    discovery_engine=_discovery_engine,
+    execution_manager=_execution_manager,
+    config_provider=_config_provider,
 )

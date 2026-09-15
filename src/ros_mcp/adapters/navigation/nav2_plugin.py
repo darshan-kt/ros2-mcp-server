@@ -22,6 +22,7 @@ from ros_mcp.contracts.core import Confidence, NavigateTarget, Pose2D, SemanticC
 from ros_mcp.contracts.errors import ErrorCode, ToolError
 from ros_mcp.contracts.plugins import PluginHealth, PluginMetadata
 from ros_mcp.contracts.results import NavigateResult
+from ros_mcp.adapters.perception.tf_adapter import LATEST_TRANSFORM_STAMP
 from ros_mcp.contracts.tf import TFAdapter
 from ros_mcp.geometry import Quaternion, yaw_to_quaternion
 
@@ -45,12 +46,20 @@ class Nav2NavigationPlugin:
         tf_adapter: TFAdapter,
         capability_registry: CapabilityRegistry,
         action_name: str,
+        base_frame: str = "base_link",
         progress_sink: Callable[[str, dict[str, Any]], None] | None = None,
         action_client_class: Any = None,
         navigate_to_pose_type: Any = None,
         poll_interval_s: float = _POLL_INTERVAL_S,
         sleep_fn: Any = None,
     ) -> None:
+        """`base_frame` names the robot-base TF frame used for the map->base_frame
+        localization/final-pose lookups — not a frozen-contract field (13-contracts.md
+        only fixes NavigationBackend's methods, not this constructor), but genuinely
+        platform-specific: TurtleBot3's TF tree uses `base_footprint`, not the generic
+        `base_link` the docs use as an example (confirmed against the live reference
+        platform during MVP testing). Defaults to `base_link` for platforms that do use
+        it; server.py wires the actual reference robot's frame explicitly."""
         self.metadata = PluginMetadata(
             plugin_id="nav2_navigation",
             api_version="1.0.0",
@@ -62,6 +71,7 @@ class Nav2NavigationPlugin:
         self._tf_adapter = tf_adapter
         self._capability_registry = capability_registry
         self._action_name = action_name
+        self._base_frame = base_frame
         self._progress_sink = progress_sink
         self._poll_interval_s = poll_interval_s
         self._sleep_fn = sleep_fn or asyncio.sleep
@@ -174,12 +184,12 @@ class Nav2NavigationPlugin:
                 fail_reason=None, final_pose=None, distance_remaining_m=None,
             )
         tf_result = await self._tf_adapter.lookup_transform(
-            "map", "base_link", datetime.now(timezone.utc), _LOCALIZATION_TF_TIMEOUT_S
+            "map", self._base_frame, LATEST_TRANSFORM_STAMP, _LOCALIZATION_TF_TIMEOUT_S
         )
         if not tf_result.ok:
             return fail(
                 ToolError(code=ErrorCode.CAPABILITY_UNAVAILABLE,
-                           message=f"map->base_link transform unavailable ({tf_result.error})"),
+                           message=f"map->{self._base_frame} transform unavailable ({tf_result.error})"),
                 fail_reason=None, final_pose=None, distance_remaining_m=None,
             )
 
@@ -294,7 +304,7 @@ class Nav2NavigationPlugin:
 
     async def _resolve_final_pose(self, feedback_state: dict[str, Any]) -> Pose2D | None:
         tf_result = await self._tf_adapter.lookup_transform(
-            "map", "base_link", datetime.now(timezone.utc), _LOCALIZATION_TF_TIMEOUT_S
+            "map", self._base_frame, LATEST_TRANSFORM_STAMP, _LOCALIZATION_TF_TIMEOUT_S
         )
         if tf_result.ok:
             assert tf_result.x is not None and tf_result.y is not None and tf_result.yaw is not None

@@ -89,6 +89,15 @@ class DefaultExecutionManager:
     ) -> None:
         self._progress_callbacks.setdefault(command_id, []).append(callback)
 
+    def set_read_handlers(self, read_handlers: dict[Operation, ReadHandler]) -> None:
+        """Not part of the frozen ExecutionManager Protocol — a construction-time
+        wiring seam for server.py, needed because building the read handlers
+        (ros_mcp.mcp.read_handlers.build_read_handlers) itself requires a reference to
+        this manager instance (for robot.get_state's active_command lookup), creating
+        an unavoidable construction-order cycle resolved by constructing the manager
+        with an empty dict first and populating it here immediately after."""
+        self._read_handlers = read_handlers
+
     def emit_progress(self, command_id: str, payload: dict[str, Any]) -> None:
         """Not part of the frozen ExecutionManager Protocol — the write-side seam
         adapters (Nav2NavigationPlugin, step 6) use to push feedback through the
