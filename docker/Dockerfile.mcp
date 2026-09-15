@@ -1,0 +1,26 @@
+# ros_mcp server + a scripted MCP stdio client (acceptance/live_client.py) in one
+# container/process pair, matching ADR-014 (stdio-only MVP transport: local process,
+# no network socket) — the client spawns the server as a subprocess exactly like Claude
+# Desktop does, it just happens to run inside Docker instead of on a desktop.
+FROM ros:humble-ros-base
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-tf2-ros \
+    ros-humble-nav2-msgs \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+COPY pyproject.toml README.md ./
+COPY src ./src
+RUN pip install --no-cache-dir -e ".[dev]" "mcp[cli]>=1.0.0"
+
+COPY config ./config
+COPY acceptance/live_client.py ./acceptance/live_client.py
+
+ENV ROS_MCP_BASE_FRAME=base_footprint
+
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && exec \"$@\"", "--"]
+CMD ["python3", "acceptance/live_client.py", "--help"]

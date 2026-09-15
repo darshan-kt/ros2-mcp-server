@@ -1,0 +1,41 @@
+# Acceptance-run topology for docs/17-mvp.md's live-robot criteria.
+#
+# Two containers, not three: MCP stdio (ADR-014) is a local-process transport, so the
+# "llm"/scripted-client role and the "mcp" server role live in ONE container as a
+# parent/subprocess pair (client spawns `python -m ros_mcp.server` over stdio, same as
+# Claude Desktop would) — a separate networked mcp service would violate the frozen
+# transport ADR. `sim` is the second container: Gazebo Classic + turtlebot3_gazebo.
+#
+# ROS_DOMAIN_ID is pinned away from the host's default (0), which already has an
+# unrelated pre-existing ROS stack on it (see acceptance/RESULTS.md Environment
+# section) — isolates this run's DDS traffic on its own bridge network.
+services:
+  sim:
+    build:
+      context: .
+      dockerfile: Dockerfile.sim
+    environment:
+      - ROS_DOMAIN_ID=77
+      - TURTLEBOT3_MODEL=burger
+    networks:
+      - ros_acceptance
+
+  mcp:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mcp
+    environment:
+      - ROS_DOMAIN_ID=77
+      - TURTLEBOT3_MODEL=burger
+    networks:
+      - ros_acceptance
+    volumes:
+      - ../acceptance/logs:/workspace/acceptance/logs
+    depends_on:
+      - sim
+    stdin_open: true
+    tty: true
+
+networks:
+  ros_acceptance:
+    driver: bridge

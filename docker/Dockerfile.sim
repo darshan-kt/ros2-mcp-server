@@ -1,0 +1,20 @@
+# Gazebo Classic 11 + turtlebot3_gazebo + Nav2, for the acceptance run's live-robot
+# criteria (docs/17-mvp.md). apt-get runs as image-build root, so this needs no host
+# sudo — the blocker that made a host-level install impractical in this sandbox.
+FROM osrf/ros:humble-desktop-full
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-humble-turtlebot3-gazebo \
+    ros-humble-turtlebot3-bringup \
+    ros-humble-turtlebot3-description \
+    ros-humble-turtlebot3-navigation2 \
+    ros-humble-nav2-bringup \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY entrypoint-sim.sh /entrypoint-sim.sh
+RUN chmod +x /entrypoint-sim.sh
+
+ENTRYPOINT ["/entrypoint-sim.sh"]
