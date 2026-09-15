@@ -115,8 +115,12 @@ class SimulatedSubscriptions:
 async def _instant_sleep(_seconds: float) -> None:
     """Replaces the control loop's between-tick asyncio.sleep in tests: the simulated
     physics already advance by exactly one tick_period per iteration (KinematicWorld),
-    so real wall-clock pacing between iterations adds nothing but test runtime."""
-    return None
+    so real wall-clock pacing between iterations adds nothing but test runtime. Still
+    uses a real (zero-duration) asyncio.sleep(0) rather than a bare `return` so it
+    genuinely yields one event-loop tick — a coroutine that never awaits anything
+    internally never cedes control, which would busy-loop forever in any test running
+    a second concurrently-scheduled task alongside the control loop."""
+    await asyncio.sleep(0)
 
 
 def _make_plugin(world: KinematicWorld, *, laser_scan_topic="/scan"):

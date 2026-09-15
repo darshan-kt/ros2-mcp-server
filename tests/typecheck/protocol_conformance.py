@@ -19,12 +19,15 @@ from ros_mcp.contracts.capabilities import CapabilityInferenceEngine, Capability
 from ros_mcp.contracts.codec import MessageCodec
 from ros_mcp.contracts.config import ConfigProvider, SafetyConfig
 from ros_mcp.contracts.discovery import DiscoveryEngine
-from ros_mcp.contracts.adapters import CancellationToken, MotionBackend
+from ros_mcp.contracts.adapters import CancellationToken, MotionBackend, NavigationBackend
 from ros_mcp.contracts.execution import CommandPlanner, ExecutionManager
+from ros_mcp.contracts.tf import TFAdapter
 from ros_mcp.contracts.safety import SafetyPolicyEngine, ValidationEngine
 from ros_mcp.contracts.subscriptions import SubscriptionManager
 from ros_mcp.discovery.engine import RclpyDiscoveryEngine
 from ros_mcp.adapters.motion.cmd_vel_plugin import CmdVelMotionPlugin
+from ros_mcp.adapters.navigation.nav2_plugin import Nav2NavigationPlugin
+from ros_mcp.adapters.perception.tf_adapter import RclpyTFAdapter
 from ros_mcp.execution.cancellation import SimpleCancellationToken
 from ros_mcp.execution.manager import DefaultExecutionManager
 from ros_mcp.execution.planner import DefaultCommandPlanner
@@ -52,6 +55,14 @@ _motion_backend: MotionBackend = CmdVelMotionPlugin(
     safety_config_provider=lambda: SafetyConfig(),
 )
 _command_planner: CommandPlanner = DefaultCommandPlanner(motion_backend=None, navigation_backend=None)
+_tf_adapter: TFAdapter = RclpyTFAdapter(ros_bridge=None, tf_buffer=None)
+_navigation_backend: NavigationBackend = Nav2NavigationPlugin(
+    ros_bridge=None,
+    node=None,
+    tf_adapter=_tf_adapter,
+    capability_registry=_capability_registry,
+    action_name="/navigate_to_pose",
+)
 
 
 async def _current_pose_provider():
