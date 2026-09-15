@@ -53,7 +53,7 @@ def encode_jpeg_thumbnail(
     if original_width > max_width_px:
         scale = max_width_px / original_width
         new_size = (max_width_px, max(1, round(original_height * scale)))
-        image = image.resize(new_size, Image.BILINEAR)
+        image = image.resize(new_size, Image.Resampling.BILINEAR)
 
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=jpeg_quality)
