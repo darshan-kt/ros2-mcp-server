@@ -1,0 +1,74 @@
+# Reference configuration for the MVP platform: TurtleBot3 (Waffle/Burger) under
+# turtlebot3_gazebo, ROS 2 Humble. Schema and precedence: docs/16-configuration.md.
+robot:
+  id: turtlebot3_waffle
+  name: "TurtleBot3 Waffle (Gazebo Classic)"
+
+discovery:
+  poll_interval_s: 5.0
+
+capabilities:
+  motion:
+    enabled: true
+    backend: cmd_vel
+    cmd_vel_topic: /cmd_vel
+    odom_topic: /odom
+  navigation:
+    enabled: true
+    backend: nav2
+    action_name: /navigate_to_pose
+  lidar:
+    topic: /scan
+  camera:
+    image_topic: /camera/image_raw
+    info_topic: /camera/camera_info
+  object_detection:
+    backend: stub_detector
+
+safety:
+  max_linear_mps: 0.5
+  max_angular_rps: 1.0
+  max_linear_acceleration_mps2: 0.5
+  max_angular_acceleration_rps2: 1.0
+  max_move_distance_m: 5.0
+  max_navigation_distance_m: 10.0
+  obstacle_stop_distance_m: 0.3
+  odom_stale_s: 0.5
+  tf_stale_s: 1.0
+  sensor_stale_s: 1.0
+  cmd_vel_watchdog_s: 1.0
+  rate_limit_rps: 2.0
+  geofence:
+    enabled: false
+    frame: map
+    min_x: -10.0
+    max_x: 10.0
+    min_y: -10.0
+    max_y: 10.0
+  approval_policy: automatic
+  human_approval:
+    required_above_distance_m: 5.0
+    timeout_s: 30
+    on_timeout: deny
+
+timeouts:
+  move_default_s: 30.0
+  move_max_s: 60.0
+  navigate_default_s: 120.0
+  navigate_max_s: 300.0
+
+perception:
+  max_result_bytes: 1048576
+  camera_max_width_px_default: 640
+  camera_max_width_px_cap: 1280
+  array_truncate_element_limit: 4096
+
+raw_ros_access:
+  enabled: false
+  allow_publish: false
+  allow_param_write: false
+  topic_allowlist: []
+
+logging:
+  level: INFO
+  format: json
