@@ -172,14 +172,33 @@ what the Claude Desktop config below actually launches.
 
 ## Connect Claude Desktop
 
-1. Copy the `mcpServers` entry from [`examples/claude_desktop_config.json`](examples/claude_desktop_config.json).
-2. Point its `command` at this repo's `examples/run_server.sh` (absolute path).
-3. Set `ROS_DISTRO_SETUP` if your ROS setup script isn't `/opt/ros/humble/setup.bash`.
-4. Restart Claude Desktop.
+1. Copy the `mcpServers` entry from [`examples/claude_desktop_config.json`](examples/claude_desktop_config.json)
+   into Desktop's own config file (`~/.config/Claude/claude_desktop_config.json` on
+   Linux, `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS) —
+   merge it in under `mcpServers` if that file already has other entries; don't
+   overwrite the whole file.
+2. Point its `command` at this repo's `examples/run_server.sh` (**absolute** path —
+   Desktop doesn't run from inside this repo, so a relative path won't resolve).
+3. If your ROS setup script isn't `/opt/ros/humble/setup.bash`, add an `env` block to
+   the same entry:
+   ```json
+   "ros-mcp-server": {
+     "command": "/home/darshan/ros2-mcp-server/examples/run_server.sh",
+     "env": { "ROS_DISTRO_SETUP": "/opt/ros/jazzy/setup.bash" }
+   }
+   ```
+4. Restart Claude Desktop — it only reads this config file at startup, so an edit made
+   while it's running has no effect until you restart.
 5. Ask it to move the robot, navigate somewhere, or describe what it sees.
 
 `run_server.sh` sources ROS and execs the server — Desktop launches MCP servers with no
-ROS environment of their own, so a bare `python -m ros_mcp.server` command won't work.
+ROS environment of their own, so a bare `python -m ros_mcp.server` command won't work
+(no `rclpy` on the path, no ROS env vars set).
+
+Start the simulator (or connect the real robot) *before* Desktop, if you can — the tool
+list reflects whatever capabilities discovery finds, and while it does keep re-polling
+and updating live, starting simplest-first avoids the "why can't Claude move the robot"
+confusion of asking before the robot exists on the graph.
 
 ## Reference Robot
 
@@ -196,6 +215,49 @@ static child of it), not the `base_link` name the docs use generically — set
 `ROS_MCP_BASE_FRAME=base_footprint` (already in `run_server.sh`'s env for this repo) if
 you run against a different platform that does use `base_link` directly, leave it unset.
 
+## Docker (sim, no host ROS/Gazebo install needed)
+
+[`docker/`](docker/) builds two self-contained images so you can exercise the whole
+stack — Gazebo + `turtlebot3_gazebo` + Nav2 on one side, `ros_mcp.server` on the other —
+without installing ROS or Gazebo on the host at all:
+
+| Image | Built from | What it is |
+|---|---|---|
+| `sim` | [`docker/Dockerfile.sim`](docker/Dockerfile.sim) | ROS 2 Humble + Gazebo Classic 11 + `turtlebot3_gazebo` + Nav2. Headless — `gzserver` only, no `gzclient` GUI ([`headless_world.launch.py`](docker/headless_world.launch.py) is `turtlebot3_gazebo`'s own world launch file with the GUI include dropped, since the container has no display). |
+| `mcp` | [`docker/Dockerfile.mcp`](docker/Dockerfile.mcp) | `ros_mcp.server` **plus** [`acceptance/live_client.py`](acceptance/live_client.py), a scripted MCP stdio client that drives the server's tools the same way Claude Desktop would, for automated testing. |
+
+```bash
+# build both images
+docker compose -f docker/docker-compose.acceptance.yml build
+
+# bring up the simulator (headless Gazebo + spawned TurtleBot3)
+docker compose -f docker/docker-compose.acceptance.yml up -d sim
+
+# drive it — runs get_state/get_capabilities/move/stop/get_laser_scan/get_camera_image/
+# the SAFETY_REJECTED check against the live sim, then exits
+docker compose -f docker/docker-compose.acceptance.yml run --rm mcp \
+    python3 acceptance/live_client.py --phase no_nav2
+
+# tear down
+docker compose -f docker/docker-compose.acceptance.yml down
+```
+
+Both containers share an isolated `ROS_DOMAIN_ID=77` bridge network
+(`docker/docker-compose.acceptance.yml`) so this never collides with ROS traffic
+already on your host's default domain.
+
+**This is a testing convenience, not an alternative to "Connect Claude Desktop" above.**
+MCP stdio is a local-process transport by design (ADR-014) — Desktop has to spawn
+`ros_mcp.server` itself to talk to it over stdio; it can't attach to a server already
+running detached inside a container. The `mcp` image runs the server *and* a stand-in
+scripted client together in one process pair, purely so this repo's live-robot behavior
+can be verified without a real LLM or a host ROS install.
+
+Nav2 + AMCL (`with_nav2` phase, for `robot.navigate`) needs to be launched separately
+inside the running `sim` container and given an initial pose — the exact commands used,
+plus every measured result from a full run, are in
+[`acceptance/RESULTS.md`](acceptance/RESULTS.md).
+
 ## Tests
 
 ```bash
@@ -211,7 +273,6 @@ only `CancellationToken` is `@runtime_checkable`).
 
 Live-robot testing (`get_state`, `get_laser_scan`, `move`, `stop`, `navigate`) requires
 `turtlebot3_gazebo` running and, for `navigate`, Nav2 + AMCL with an initial pose set
-(`ros2 topic pub /initialpose ...` once, or set it in RViz). A Docker-based version of
-this (sim + server, no host ROS install needed) lives in [`docker/`](docker/); a full
-run's measured results — displacement error, stop latency, safety-rejection evidence —
-are in [`acceptance/RESULTS.md`](acceptance/RESULTS.md).
+(`ros2 topic pub /initialpose ...` once, or set it in RViz) — see [Docker](#docker-sim-no-host-rosgazebo-install-needed)
+above for a no-host-install way to run this, and
+[`acceptance/RESULTS.md`](acceptance/RESULTS.md) for a full run's measured results.
