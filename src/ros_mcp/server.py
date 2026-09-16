@@ -131,7 +131,10 @@ async def _amain(config_path: str) -> None:
     safety_engine = DefaultSafetyPolicyEngine(config_provider.safety)
 
     async def current_pose_provider() -> Pose2D | None:
-        return resolve_current_pose(registry=registry, subscriptions=subscriptions)
+        return await resolve_current_pose(
+            registry=registry, subscriptions=subscriptions,
+            tf_adapter=tf_adapter, base_frame=base_frame,
+        )
 
     execution_manager = DefaultExecutionManager(
         registry=registry, command_planner=planner, safety_policy_engine=safety_engine,
@@ -142,6 +145,7 @@ async def _amain(config_path: str) -> None:
         build_read_handlers(
             registry=registry, subscriptions=subscriptions, perception_adapter=perception_adapter,
             execution_manager=execution_manager, perception_config_provider=config_provider.perception,
+            tf_adapter=tf_adapter, base_frame=base_frame,
         )
     )
     progress_sink_box["fn"] = execution_manager.emit_progress
@@ -155,6 +159,7 @@ async def _amain(config_path: str) -> None:
     resource_provider = DefaultResourceProvider(
         registry=registry, subscriptions=subscriptions, discovery_engine=discovery_engine,
         execution_manager=execution_manager, config_provider=config_provider,
+        tf_adapter=tf_adapter, base_frame=base_frame,
     )
 
     await discovery_engine.start()

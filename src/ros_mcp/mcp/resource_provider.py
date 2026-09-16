@@ -23,6 +23,7 @@ from ros_mcp.contracts.results import CommandSummary
 from ros_mcp.contracts.subscriptions import SubscriptionManager
 from ros_mcp.contracts.execution import ExecutionManager
 from ros_mcp.contracts.results import CapabilitiesResult, RobotStateResult
+from ros_mcp.contracts.tf import TFAdapter
 from ros_mcp.mcp.capabilities_resolver import resolve_capabilities
 from ros_mcp.mcp.serialization import to_json_safe
 from ros_mcp.mcp.state_resolver import resolve_robot_state
@@ -53,12 +54,16 @@ class DefaultResourceProvider:
         discovery_engine: DiscoveryEngine,
         execution_manager: ExecutionManager,
         config_provider: ConfigProvider,
+        tf_adapter: TFAdapter | None = None,
+        base_frame: str | None = None,
     ) -> None:
         self._registry = registry
         self._subscriptions = subscriptions
         self._discovery_engine = discovery_engine
         self._execution_manager = execution_manager
         self._config_provider = config_provider
+        self._tf_adapter = tf_adapter
+        self._base_frame = base_frame
 
     def current_resources(self) -> tuple[str, ...]:
         return RESOURCE_URIS
@@ -80,7 +85,7 @@ class DefaultResourceProvider:
                             execution_state=active.execution_state)
             if active is not None else None
         )
-        return resolve_robot_state(
+        return await resolve_robot_state(
             robot_id=robot_id,
             command_id=new_ulid(),
             duration_sec=0.0,
@@ -88,6 +93,8 @@ class DefaultResourceProvider:
             subscriptions=self._subscriptions,
             requested_frame=None,
             active_command=active_summary,
+            tf_adapter=self._tf_adapter,
+            base_frame=self._base_frame,
         )
 
     async def _read_capabilities(self) -> CapabilitiesResult:

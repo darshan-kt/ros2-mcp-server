@@ -59,7 +59,7 @@ def _wire(*, world: KinematicWorld, safety: SafetyConfig):
     async def current_pose_provider() -> Pose2D | None:
         from ros_mcp.robot_state import resolve_current_pose
 
-        return resolve_current_pose(registry=registry, subscriptions=subs)
+        return await resolve_current_pose(registry=registry, subscriptions=subs)
 
     manager = DefaultExecutionManager(
         registry=registry,

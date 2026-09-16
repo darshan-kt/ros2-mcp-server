@@ -17,6 +17,7 @@ from ros_mcp.contracts.errors import ToolResult
 from ros_mcp.contracts.execution import ExecutionManager
 from ros_mcp.contracts.results import CommandSummary
 from ros_mcp.contracts.subscriptions import SubscriptionManager
+from ros_mcp.contracts.tf import TFAdapter
 from ros_mcp.mcp.capabilities_resolver import resolve_capabilities
 from ros_mcp.mcp.state_resolver import resolve_robot_state
 
@@ -28,6 +29,8 @@ def build_read_handlers(
     perception_adapter: PerceptionAdapter,
     execution_manager: ExecutionManager,
     perception_config_provider: Callable[[], PerceptionConfig],
+    tf_adapter: TFAdapter | None = None,
+    base_frame: str | None = None,
 ) -> dict[Operation, Callable[[SemanticCommand], Awaitable[ToolResult]]]:
     async def handle_get_state(command: SemanticCommand) -> ToolResult:
         start = time.monotonic()
@@ -42,7 +45,7 @@ def build_read_handlers(
             if active is not None and active.command_id != command.command_id
             else None
         )
-        return resolve_robot_state(
+        return await resolve_robot_state(
             robot_id=command.robot_id,
             command_id=command.command_id,
             duration_sec=time.monotonic() - start,
@@ -50,6 +53,8 @@ def build_read_handlers(
             subscriptions=subscriptions,
             requested_frame=requested_frame,
             active_command=active_summary,
+            tf_adapter=tf_adapter,
+            base_frame=base_frame,
         )
 
     async def handle_get_capabilities(command: SemanticCommand) -> ToolResult:

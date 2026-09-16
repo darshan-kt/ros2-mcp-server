@@ -6,10 +6,11 @@ from ros_mcp.contracts.capabilities import CapabilityRegistry
 from ros_mcp.contracts.core import Pose2D
 from ros_mcp.contracts.results import CommandSummary, RobotStateResult
 from ros_mcp.contracts.subscriptions import SubscriptionManager
+from ros_mcp.contracts.tf import TFAdapter
 from ros_mcp.robot_state import resolve_current_pose
 
 
-def resolve_robot_state(
+async def resolve_robot_state(
     *,
     robot_id: str,
     command_id: str,
@@ -18,11 +19,17 @@ def resolve_robot_state(
     subscriptions: SubscriptionManager,
     requested_frame: str | None,
     active_command: CommandSummary | None,
+    tf_adapter: TFAdapter | None = None,
+    base_frame: str | None = None,
 ) -> RobotStateResult:
     motion_cap = registry.get("differential_drive_motion")
 
-    pose: Pose2D | None = resolve_current_pose(
-        registry=registry, subscriptions=subscriptions, requested_frame=requested_frame
+    pose: Pose2D | None = await resolve_current_pose(
+        registry=registry,
+        subscriptions=subscriptions,
+        requested_frame=requested_frame,
+        tf_adapter=tf_adapter,
+        base_frame=base_frame,
     )
     linear_velocity: float | None = None
     angular_velocity: float | None = None
